@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="0dip"
+        android:layout_weight="4.18" />
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="0dip"
+        android:layout_weight="17.36"
+        android:background="@drawable/aideddriving_view1"
+        android:alpha="0.8"/>
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="0dip"
+        android:layout_weight="3.18"/>
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="0dip"
+        android:layout_weight="17.36"
+        android:background="@drawable/aideddriving_view2"
+        android:alpha="0.8"/>
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="0dip"
+        android:layout_weight="3.18"/>
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="0dip"
+        android:layout_weight="17.36"
+        android:background="@drawable/aideddriving_view3"
+        android:alpha="0.8"/>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dip"
+        android:layout_weight="6.35"
+        android:orientation="horizontal"
+        android:gravity="right|center_vertical">
+
+        <Button
+            android:id="@+id/aideddriving_bt_start"
+            android:layout_width="120dip"
+            android:layout_height="30dip"
+            android:layout_marginRight="20dip"
+            android:background="@drawable/aideddriving_bt_start" />
+
+    </LinearLayout>
+</LinearLayout>

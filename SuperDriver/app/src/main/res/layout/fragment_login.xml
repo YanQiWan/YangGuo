@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/login_bk"
+    android:gravity="center_horizontal"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dip"
+        android:layout_weight="23.5"
+        android:gravity="center">
+
+        <View
+            android:layout_width="120dip"
+            android:layout_height="120dip"
+            android:background="@drawable/regist_logo" />
+    </LinearLayout>
+
+    <EditText
+        android:id="@+id/fragment_login_et_PhoneNumber"
+        android:layout_width="300dip"
+        android:layout_height="0dip"
+        android:layout_weight="6.56"
+        android:background="@drawable/login_edittext"
+        android:hint="手机号"
+        android:paddingLeft="15dip"
+        android:textColor="#FFFFFF"
+        android:textColorHint="#FFFFFF"
+        android:textSize="20dip"
+        android:textStyle="bold" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="0dip"
+        android:layout_weight="2.54" />
+
+
+    <EditText
+        android:id="@+id/fragment_login_et_Password"
+        android:layout_width="300dip"
+        android:layout_height="0dip"
+        android:layout_weight="6.56"
+        android:background="@drawable/login_edittext"
+        android:hint="密码"
+        android:paddingLeft="15dip"
+        android:textColor="#FFFFFF"
+        android:textColorHint="#FFFFFF"
+        android:textSize="20dip"
+        android:textStyle="bold" />
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dip"
+        android:layout_weight="11.32">
+
+        <CheckBox
+            android:id="@+id/cb_remember"
+            android:layout_width="140dip"
+            android:layout_height="60dip"
+            android:layout_alignParentLeft="true"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="50dp"
+            android:text="记住账号?"
+            android:textColor="#FFFFFF"
+            android:textSize="12sp"
+            android:textStyle="italic" />
+
+        <CheckBox
+            android:id="@+id/cb_autologin"
+            android:layout_width="140dip"
+            android:layout_height="60dip"
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"
+            android:layout_marginRight="50dp"
+            android:text="自动登陆"
+            android:textColor="#FFFFFF"
+            android:textSize="12sp"
+            android:textStyle="italic" />
+    </RelativeLayout>
+
+    <Button
+        android:id="@+id/fragment_login_bt_login"
+        android:layout_width="140dip"
+        android:layout_height="0dip"
+        android:layout_weight="4.55"
+        android:background="@drawable/login_button"
+        android:text="登陆"
+        android:textColor="#FFFFFF" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="0dip"
+        android:layout_weight="1.27" />
+
+    <Button
+        android:id="@+id/fragment_login_bt_regist"
+        android:layout_width="140dip"
+        android:layout_height="0dip"
+        android:layout_weight="4.55"
+        android:background="@drawable/login_button"
+        android:text="注册"
+        android:textColor="#FFFFFF" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="0dip"
+        android:layout_weight="14.39" />
+</LinearLayout>

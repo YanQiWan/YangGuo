@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/record_linearlayout1"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:background="@drawable/record_item_bk" >
+
+	<LinearLayout
+		android:layout_width="0dip"
+		android:layout_height="match_parent"
+		android:layout_weight="1"
+		android:orientation="vertical"
+		android:padding="10dip">
+
+		<TextView
+			android:id="@+id/record_tv_startTime"
+			android:layout_width="wrap_content"
+			android:layout_height="30dip"
+			android:gravity="center"
+			android:text="2019-05-21 19:34:33"
+			android:textColor="#000000"
+			android:textSize="22sp"
+			android:textStyle="bold" />
+
+		<TextView
+			android:id="@+id/record_tv_startPlace"
+			android:layout_width="wrap_content"
+			android:layout_height="20dip"
+			android:gravity="center"
+			android:text="长安大学渭水校区"
+			android:textColor="#000000"
+			android:textSize="15sp" />
+
+		<TextView
+			android:id="@+id/record_tv_endTime"
+			android:layout_width="wrap_content"
+			android:layout_height="30dip"
+			android:gravity="center"
+			android:text="2019-05-21 21:34:33"
+			android:textColor="#000000"
+            android:textSize="22sp"
+            android:textStyle="bold" />
+
+		<TextView
+			android:id="@+id/record_tv_endPlace"
+			android:layout_width="wrap_content"
+			android:layout_height="20dip"
+			android:gravity="center"
+			android:text="小寨"
+			android:textColor="#000000"
+			android:textSize="15sp" />
+	</LinearLayout>
+	
+</LinearLayout>
