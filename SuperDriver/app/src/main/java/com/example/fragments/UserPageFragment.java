@@ -15,7 +15,7 @@ import com.example.application.SysApplication;
 import com.example.library.CircleImageView;
 import com.example.superdriver.ChangeActivity;
 import com.example.superdriver.R;
-import com.example.superdriver.RecordActivity;
+import com.example.superdriver.RecordListActivity;
 import com.example.utils.BitmapUtils;
 import com.example.utils.LocalFileUtils;
 import com.zhy.http.okhttp.OkHttpUtils;
@@ -65,7 +65,7 @@ public class UserPageFragment extends android.support.v4.app.Fragment {
         tv_record.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent = new Intent(getActivity(), RecordActivity.class);
+                Intent intent = new Intent(getActivity(), RecordListActivity.class);
                 startActivity(intent);
             }
         });

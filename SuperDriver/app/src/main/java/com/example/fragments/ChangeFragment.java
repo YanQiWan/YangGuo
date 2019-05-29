@@ -2,6 +2,7 @@ package com.example.fragments;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -30,16 +31,14 @@ import com.example.library.CircleImageView;
 import com.example.superdriver.MainViewPagerActivity;
 import com.example.superdriver.R;
 import com.example.utils.BitmapUtils;
+import com.example.utils.InternetUtils;
 import com.example.utils.LocalFileUtils;
 import com.example.utils.PatternUtils;
 import com.google.gson.Gson;
 import com.zhy.http.okhttp.OkHttpUtils;
 import com.zhy.http.okhttp.callback.FileCallBack;
 import com.zhy.http.okhttp.callback.StringCallback;
-
 import java.io.File;
-import java.util.Date;
-
 import okhttp3.Call;
 
 public class ChangeFragment extends Fragment {
@@ -138,6 +137,11 @@ public class ChangeFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 // TODO Auto-generated method stub
+                if (!InternetUtils.isNetworkConnected(getContext())) {
+                    new AlertDialog.Builder(getActivity()).setTitle("注意").setMessage("网络连接异常，请检查您的网络设置!")
+                            .setPositiveButton("确定", null).show();
+                    return;
+                }
                 if(!PatternUtils.checkEmail(et_email.getText().toString().trim())) {
                     Toast.makeText(getActivity(), "邮箱格式不合法，请重新输入", Toast.LENGTH_SHORT).show();
                     return;

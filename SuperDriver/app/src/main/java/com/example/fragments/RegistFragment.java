@@ -16,9 +16,11 @@ import android.widget.Toast;
 import com.example.application.SysApplication;
 import com.example.superdriver.ChangeActivity;
 import com.example.superdriver.R;
+import com.example.utils.InternetUtils;
 import com.example.utils.PatternUtils;
 import com.zhy.http.okhttp.OkHttpUtils;
 import com.zhy.http.okhttp.callback.Callback;
+
 import okhttp3.Call;
 import okhttp3.Response;
 
@@ -37,14 +39,19 @@ public class RegistFragment extends Fragment {
     }
 
     private void initView(View view) {
-        et_phoneNumber = (EditText)view.findViewById(R.id.fragment_regist_et_phonenumber);
-        et_passWord = (EditText)view.findViewById(R.id.fragment_regist_et_password);
-        et_ensure_passWord = (EditText)view.findViewById(R.id.fragment_regist_et_ensure_password);
-        bt_regist = (Button)view.findViewById(R.id.fragment_regist_bt_regist);
+        et_phoneNumber = (EditText) view.findViewById(R.id.fragment_regist_et_phonenumber);
+        et_passWord = (EditText) view.findViewById(R.id.fragment_regist_et_password);
+        et_ensure_passWord = (EditText) view.findViewById(R.id.fragment_regist_et_ensure_password);
+        bt_regist = (Button) view.findViewById(R.id.fragment_regist_bt_regist);
         bt_regist.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
 
+                if (!InternetUtils.isNetworkConnected(getContext())) {
+                    new AlertDialog.Builder(getActivity()).setTitle("注意").setMessage("网络连接异常，请检查您的网络设置!")
+                            .setPositiveButton("确定", null).show();
+                    return;
+                }
                 if (!PatternUtils.checkMobileNumber(et_phoneNumber.getText().toString().trim())) {
                     new AlertDialog.Builder(getActivity()).setTitle("注意").setMessage("手机号格式不合法，请重新输入!")
                             .setPositiveButton("确定", null).show();
@@ -56,23 +63,23 @@ public class RegistFragment extends Fragment {
                     return;
                 }
                 int temp = PatternUtils.checkPassWord(et_passWord.getText().toString().trim());
-                if(temp != PatternUtils.VALID){
-                    if(temp == PatternUtils.HAS_SPACE){
+                if (temp != PatternUtils.VALID) {
+                    if (temp == PatternUtils.HAS_SPACE) {
                         new AlertDialog.Builder(getActivity()).setTitle("注意").setMessage("密码中不能有空格!")
                                 .setPositiveButton("确定", null).show();
                         return;
                     }
-                    if(temp == PatternUtils.INVALID_LETTER){
+                    if (temp == PatternUtils.INVALID_LETTER) {
                         new AlertDialog.Builder(getActivity()).setTitle("注意").setMessage("密码仅可由数字和字母组成!")
                                 .setPositiveButton("确定", null).show();
                         return;
                     }
-                    if(temp == PatternUtils.HAS_WORD){
+                    if (temp == PatternUtils.HAS_WORD) {
                         new AlertDialog.Builder(getActivity()).setTitle("注意").setMessage("密码中不能有汉字!")
                                 .setPositiveButton("确定", null).show();
                         return;
                     }
-                    if(temp == PatternUtils.LENGTH_INVALID){
+                    if (temp == PatternUtils.LENGTH_INVALID) {
                         new AlertDialog.Builder(getActivity()).setTitle("注意").setMessage("密码长度仅可为6-16位!")
                                 .setPositiveButton("确定", null).show();
                         return;
@@ -88,7 +95,7 @@ public class RegistFragment extends Fragment {
                 progressDialog = ProgressDialog.show(getActivity(), "注册", "正在注册,请稍候！");
                 OkHttpUtils.get().addParams("phoneNumber", et_phoneNumber.getText().toString().trim())
                         .addParams("passWord", et_passWord.getText().toString().trim())
-                        .url("http://39.106.196.211:8886/SuperDriver/regist").id(100).build().execute(new Callback<String>(){
+                        .url("http://39.106.196.211:8886/SuperDriver/regist").id(100).build().execute(new Callback<String>() {
 
                     @Override
                     public String parseNetworkResponse(Response response, int id) throws Exception {
@@ -111,14 +118,19 @@ public class RegistFragment extends Fragment {
                         progressDialog.dismiss();
                         bt_regist.setEnabled(true);
                         bt_regist.getBackground().setAlpha(0xff);
-                        if(response.equals("true")){
+                        if (response.equals("true")) {
                             SysApplication.login_user.setPhoneNumber(et_phoneNumber.getText().toString().trim());
                             SysApplication.login_user.setPassWord(et_passWord.getText().toString().trim());
                             Toast.makeText(getContext(), "注册成功，即将跳转到修改信息界面", Toast.LENGTH_SHORT).show();
                             Intent intent = new Intent(getActivity(), ChangeActivity.class);
                             startActivity(intent);
-                        }else{
-                            Toast.makeText(getContext(), "Failed ", Toast.LENGTH_SHORT).show();
+                        } else if (response.equals("repeat")) {
+                            new AlertDialog.Builder(getActivity()).setTitle("注意").setMessage("该账号已被注册过!")
+                                    .setPositiveButton("确定", null).show();
+                        } else {
+                            new AlertDialog.Builder(getActivity()).setTitle("注意").setMessage("服务器内部错误!")
+                                    .setPositiveButton("确定", null).show();
+                            return;
                         }
                     }
 

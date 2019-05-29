@@ -100,7 +100,6 @@ public class MapFragment extends Fragment {
         return view;
     }
 
-
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -108,7 +107,7 @@ public class MapFragment extends Fragment {
     }
 
     private void initView(View view) {
-        mMapView = (MapView) view.findViewById(R.id.map_view);
+        mMapView = (MapView) view.findViewById(R.id.fragment_map_map_view);
         bt_reset = (Button) view.findViewById(R.id.fragment_map_bt_reset);
         bt_reset.setOnClickListener(new View.OnClickListener() {
             @Override

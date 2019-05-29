@@ -98,6 +98,7 @@
         <activity android:name="org.gps.demo.sdkdemo.liteapp.LiteActivity"></activity>
 
         <activity android:name=".SiriActivity"></activity>
+        <activity android:name=".RecordListActivity"></activity>
         <activity android:name=".RecordActivity"></activity>
         <service android:name="com.example.service.UpdateRouteService"></service>
     </application>

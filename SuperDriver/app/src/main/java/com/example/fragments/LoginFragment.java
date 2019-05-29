@@ -5,9 +5,12 @@ import com.example.bean.User;
 import com.example.superdriver.MainViewPagerActivity;
 import com.example.superdriver.R;
 import com.example.superdriver.RegistActivity;
+import com.example.utils.InternetUtils;
+import com.example.utils.PatternUtils;
 import com.google.gson.Gson;
 import com.zhy.http.okhttp.OkHttpUtils;
 import com.zhy.http.okhttp.callback.Callback;
+
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
@@ -25,6 +28,7 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.Toast;
+
 import okhttp3.Call;
 import okhttp3.Response;
 
@@ -39,6 +43,7 @@ public class LoginFragment extends Fragment {
     private SharedPreferences preference;
 
     private ProgressDialog progressDialog;
+
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_login, null);
         initView(view);
@@ -53,7 +58,7 @@ public class LoginFragment extends Fragment {
         bt_login = (Button) view.findViewById(R.id.fragment_login_bt_login);
         bt_regist = (Button) view.findViewById(R.id.fragment_login_bt_regist);
         cb_remember = (CheckBox) view.findViewById(R.id.cb_remember);
-        if(SysApplication.login_user.getPhoneNumber()!=null){
+        if (SysApplication.login_user.getPhoneNumber() != null) {
             et_PhoneNumber.setText(SysApplication.login_user.getPhoneNumber());
             et_Password.setText(SysApplication.login_user.getPassWord());
         }
@@ -69,17 +74,26 @@ public class LoginFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 // TODO Auto-generated method stub
+                if (!InternetUtils.isNetworkConnected(getContext())) {
+                    new AlertDialog.Builder(getActivity()).setTitle("注意").setMessage("网络连接异常，请检查您的网络设置!")
+                            .setPositiveButton("确定", null).show();
+                    return;
+                }
                 if (et_PhoneNumber.length() == 0) {
-                    new AlertDialog.Builder(getActivity()).setTitle("注意").setMessage("用户名为空")
+                    new AlertDialog.Builder(getActivity()).setTitle("注意").setMessage("手机号不能为空")
                             .setPositiveButton("确定", null).show();
                 } else if (et_Password.length() == 0) {
                     new AlertDialog.Builder(getActivity()).setTitle("注意").setMessage("密码不能为空")
                             .setPositiveButton("确定", null).show();
-                } else{
+                } else if (!PatternUtils.checkMobileNumber(et_PhoneNumber.getText().toString().trim())) {
+                    new AlertDialog.Builder(getActivity()).setTitle("注意").setMessage("手机号格式不合法，请重新输入!")
+                            .setPositiveButton("确定", null).show();
+                    return;
+                } else {
                     progressDialog = ProgressDialog.show(getActivity(), "登录", "正在登录,请稍候！");
                     OkHttpUtils.get().addParams("phoneNumber", et_PhoneNumber.getText().toString().trim())
                             .addParams("passWord", et_Password.getText().toString().trim())
-                            .url("http://39.106.196.211:8886/SuperDriver/login").id(100).build().execute(new Callback<User>(){
+                            .url("http://39.106.196.211:8886/SuperDriver/login").id(100).build().execute(new Callback<User>() {
 
                         @Override
                         public void onError(Call arg0, Exception arg1, int arg2) {
@@ -91,7 +105,7 @@ public class LoginFragment extends Fragment {
                         public void onResponse(User response, int arg1) {
                             // TODO Auto-generated method stub
                             progressDialog.dismiss();
-                            if(response!=null){
+                            if (response != null) {
                                 SysApplication.login_user = response;
                                 Editor edit = preference.edit();
                                 String phoneNumber = response.getPhoneNumber();
@@ -107,7 +121,7 @@ public class LoginFragment extends Fragment {
 
                                 Intent intent = new Intent(getActivity(), MainViewPagerActivity.class);
                                 startActivity(intent);
-                            }else{
+                            } else {
                                 Toast.makeText(getContext(), "Failed ", Toast.LENGTH_SHORT).show();
                             }
 

@@ -16,12 +16,9 @@ package com.example.fragments;
  * limitations under the License.
  */
 
-import android.Manifest;
 import android.annotation.SuppressLint;
-import android.app.Fragment;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
 import android.hardware.Camera.CameraInfo;
@@ -31,7 +28,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.support.annotation.Nullable;
-import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.util.Size;
 import android.util.SparseIntArray;
@@ -42,17 +39,15 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.example.application.SysApplication;
 import com.example.bean.Record;
-import com.example.fragments.CameraConnectionFragment;
+import com.example.library.LocationFragment;
 import com.example.service.UpdateRouteService;
 import com.example.superdriver.R;
 import com.example.utils.LocalFileUtils;
 
 import org.gps.demo.CLocation;
-import org.gps.demo.IBaseGpsListener;
 import org.tensorflow.demo.AutoFitTextureView;
 import org.tensorflow.demo.env.ImageUtils;
 import org.tensorflow.demo.env.Logger;
@@ -68,25 +63,13 @@ import java.util.List;
 import java.util.Locale;
 
 @SuppressLint("ValidFragment")
-public class LegacyCameraConnectionFragment extends Fragment implements IBaseGpsListener {
+public class LegacyCameraConnectionFragment extends LocationFragment {
     private Camera camera;
     private static final Logger LOGGER = new Logger();
     private Camera.PreviewCallback imageListener;
     private Size desiredSize;
-
-    //存储路径
-    private FileOutputStream fileOutputStream = null;
-    private File record = null;
-    private Date startTime = null;
-    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-
-    /**
-     * The layout identifier to inflate for this Fragment.
-     */
-    private int layout;
-    private TextView tv_speed;
+    
     private Button bt_end;
-    private Record cur_record;
 
     public LegacyCameraConnectionFragment(
             final Camera.PreviewCallback imageListener, final int layout, final Size desiredSize) {
@@ -178,11 +161,6 @@ public class LegacyCameraConnectionFragment extends Fragment implements IBaseGps
      */
     private HandlerThread backgroundThread;
 
-    @Override
-    public View onCreateView(
-            final LayoutInflater inflater, final ViewGroup container, final Bundle savedInstanceState) {
-        return inflater.inflate(layout, container, false);
-    }
 
     @Override
     public void onViewCreated(final View view, final Bundle savedInstanceState) {
@@ -203,8 +181,6 @@ public class LegacyCameraConnectionFragment extends Fragment implements IBaseGps
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        LocationManager locationManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
-        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
     }
 
     @Override
@@ -283,95 +259,4 @@ public class LegacyCameraConnectionFragment extends Fragment implements IBaseGps
         return -1; // No camera found
     }
 
-    private void updateSpeed(CLocation location) {
-        // TODO Auto-generated method stub
-        float nCurrentSpeed = 0;
-
-        if(location != null)
-        {
-            location.setUseMetricunits(true);
-            nCurrentSpeed = location.getSpeed();
-        }
-        Formatter fmt = new Formatter(new StringBuilder());
-        fmt.format(Locale.US, "%.2f", nCurrentSpeed);
-        String strCurrentSpeed = fmt.toString();
-        strCurrentSpeed = strCurrentSpeed.replace(' ', '0');
-
-        String strUnits = "miles/hour";
-        if(location.getUseMetricUnits())
-        {
-            strUnits = "meters/second";
-        }
-
-        tv_speed.setText(strCurrentSpeed + " " + strUnits);
-    }
-
-    @Override
-    public void onLocationChanged(Location location) {
-        // TODO Auto-generated method stub
-        if(location != null)
-        {
-            CLocation myLocation = new CLocation(location, true);
-            this.updateSpeed(myLocation);
-            String str = location.getLongitude()+"\t"+location.getLatitude()+"\t";
-            try {
-                fileOutputStream.write(str.getBytes());
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    @Override
-    public void onProviderDisabled(String provider) {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    public void onProviderEnabled(String provider) {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    public void onStatusChanged(String provider, int status, Bundle extras) {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    public void onGpsStatusChanged(int event) {
-        // TODO Auto-generated method stub
-
-    }
-
-    private void startStroke() {
-        startTime = new Date();
-        String recordId = SysApplication.login_user.getPhoneNumber()+"_"+startTime.getTime();
-        record = new File(LocalFileUtils.getSDPath()+"/SuperDriver/"+ recordId+".txt");
-        try {
-            fileOutputStream = new FileOutputStream(record);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-        cur_record = new Record();
-        cur_record.setPhoneNumber(SysApplication.login_user.getPhoneNumber());
-        cur_record.setRecordId(recordId);
-        cur_record.setStartTime(sdf.format(startTime));
-    }
-
-    void finishStroke(){
-        try {
-            Log.e("Like","fuck");
-            fileOutputStream.close();
-            Date endTime = new Date();
-            cur_record.setEndTime(sdf.format(endTime));
-            Intent intent = new Intent(getActivity(), UpdateRouteService.class);
-            intent.putExtra("record", cur_record);
-            getActivity().startService(intent);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
 }

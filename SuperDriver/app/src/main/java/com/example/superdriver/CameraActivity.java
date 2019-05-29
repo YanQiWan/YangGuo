@@ -18,8 +18,6 @@ package com.example.superdriver;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
-import android.app.Activity;
-import android.app.Fragment;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
@@ -28,8 +26,6 @@ import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.params.StreamConfigurationMap;
-import android.location.Location;
-import android.location.LocationManager;
 import android.media.Image;
 import android.media.Image.Plane;
 import android.media.ImageReader;
@@ -39,31 +35,24 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Trace;
-import android.util.DisplayMetrics;
+import android.support.v4.app.Fragment;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.util.Size;
 import android.view.KeyEvent;
 import android.view.Surface;
 import android.view.View;
 import android.view.WindowManager;
-import android.widget.TextView;
 import android.widget.Toast;
-
 import com.example.application.SysApplication;
 import com.example.fragments.CameraConnectionFragment;
 import com.example.fragments.LegacyCameraConnectionFragment;
-
-import org.gps.demo.CLocation;
-import org.gps.demo.IBaseGpsListener;
 import org.tensorflow.demo.OverlayView;
 import org.tensorflow.demo.env.ImageUtils;
 import org.tensorflow.demo.env.Logger;
-
 import java.nio.ByteBuffer;
-import java.util.Formatter;
-import java.util.Locale;
 
-public abstract class CameraActivity extends Activity
+public abstract class CameraActivity extends AppCompatActivity
         implements OnImageAvailableListener, Camera.PreviewCallback{
     private static final Logger LOGGER = new Logger();
 
@@ -413,7 +402,7 @@ public abstract class CameraActivity extends Activity
                     new LegacyCameraConnectionFragment(this, getLayoutId(), getDesiredPreviewFrameSize());
         }
 
-        getFragmentManager()
+        getSupportFragmentManager()
                 .beginTransaction()
                 .replace(R.id.container, fragment)
                 .commit();
