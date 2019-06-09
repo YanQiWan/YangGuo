@@ -51,16 +51,8 @@ import org.gps.demo.CLocation;
 import org.tensorflow.demo.AutoFitTextureView;
 import org.tensorflow.demo.env.ImageUtils;
 import org.tensorflow.demo.env.Logger;
-
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Formatter;
 import java.util.List;
-import java.util.Locale;
 
 @SuppressLint("ValidFragment")
 public class LegacyCameraConnectionFragment extends LocationFragment {

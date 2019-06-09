@@ -1,8 +1,13 @@
 package com.example.library;
 
 import android.annotation.SuppressLint;
+import android.content.Context;
 import android.content.Intent;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -20,6 +25,7 @@ import com.baidu.mapapi.map.MapStatusUpdateFactory;
 import com.baidu.mapapi.map.MyLocationConfiguration;
 import com.baidu.mapapi.map.MyLocationData;
 import com.baidu.mapapi.model.LatLng;
+import com.baidu.mapapi.utils.DistanceUtil;
 import com.example.application.SysApplication;
 import com.example.bean.Record;
 import com.example.service.UpdateRouteService;
@@ -27,6 +33,7 @@ import com.example.superdriver.R;
 import com.example.utils.LocalFileUtils;
 
 import org.gps.demo.CLocation;
+import org.gps.demo.IBaseGpsListener;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -37,7 +44,7 @@ import java.util.Date;
 import java.util.Formatter;
 import java.util.Locale;
 
-public class LocationFragment extends android.support.v4.app.Fragment {
+public class LocationFragment extends android.support.v4.app.Fragment{
     private final static String TAG = "LocationFragment";
 
     //定位相关
@@ -50,20 +57,24 @@ public class LocationFragment extends android.support.v4.app.Fragment {
     public LocationFragment() {
     }
 
+    //速度计算相关
     protected TextView tv_speed;
+    private Date first_time;
+    private Date second_time;
 
     /**
      * The layout identifier to inflate for this Fragment.
      */
     protected int layout;
 
-    //存储路径
+    //存储路线相关
     protected FileOutputStream fileOutputStream = null;
     protected File record = null;
     protected Date startTime = null;
+    protected int pointNum = 0;
     SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     protected Record cur_record;
-    protected String curPlace;
+    protected String curPlace = "";
     private boolean isFirst = true;
 
     @SuppressLint("ValidFragment")
@@ -78,6 +89,44 @@ public class LocationFragment extends android.support.v4.app.Fragment {
         return view;
     }
 
+    @SuppressLint("MissingPermission")
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        //开启定位
+        if (mLocationClient!=null&&!mLocationClient.isStarted())
+            mLocationClient.start();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        //停止定位
+        if(mLocationClient!=null)
+            mLocationClient.stop();
+        //停止方向传感器
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+    }
+
 
     //定位
     private class MyLocationListener extends BDAbstractLocationListener {
@@ -86,15 +135,22 @@ public class LocationFragment extends android.support.v4.app.Fragment {
             if (location == null) {
                 return;
             }
-
             if (mLatitude != location.getLatitude() || mLongtitude != location.getLongitude()) {
+                if(isFirst){
+                    first_time = new Date();
+                }else{
+                    Double distance= DistanceUtil.getDistance(new LatLng(location.getLatitude(), location.getLongitude()), new LatLng(mLatitude,mLongtitude));
+                    second_time = new Date();
+                    long total_time = (second_time.getTime()-first_time.getTime())/1000;
+                    double speed = distance/total_time;
+                    updateSpeed(speed);
+                    first_time = second_time;
+                }
                 mLatitude = location.getLatitude();
                 mLongtitude = location.getLongitude();
-                Log.e(TAG, location.getSpeed() + " " + mLatitude + " " + mLongtitude + " " + location.getAddrStr());
-                updateSpeed(location);
                 if (fileOutputStream != null) {
                     //更新经纬度
-
+                    pointNum++;
                     String str = mLatitude + "\n" + mLongtitude + "\n";
                     try {
                         fileOutputStream.write(str.getBytes());
@@ -113,11 +169,11 @@ public class LocationFragment extends android.support.v4.app.Fragment {
                 // 离线定位结果
                 curPlace = location.getAddrStr();
             } else if (location.getLocType() == BDLocation.TypeServerError) {
-                Toast.makeText(getContext(), "定位:服务器错误", Toast.LENGTH_SHORT).show();
+                tv_speed.setText("定位:服务器错误");
             } else if (location.getLocType() == BDLocation.TypeNetWorkException) {
-                Toast.makeText(getContext(), "定位:网络错误", Toast.LENGTH_SHORT).show();
+                tv_speed.setText("定位:网络错误");
             } else if (location.getLocType() == BDLocation.TypeCriteriaException) {
-                Toast.makeText(getContext(), "定位:手机模式错误，请检查是否飞行", Toast.LENGTH_SHORT).show();
+                tv_speed.setText("定位:手机模式错误，请检查是否飞行模式");
             }
             if (isFirst) {
                 isFirst = false;
@@ -147,20 +203,15 @@ public class LocationFragment extends android.support.v4.app.Fragment {
         mLocationClient.start();
     }
 
-    protected void updateSpeed(BDLocation location) {
+    private void updateSpeed(double speed) {
         // TODO Auto-generated method stub
-        float nCurrentSpeed = 0;
-
-        if (location != null) {
-            nCurrentSpeed = location.getSpeed() / 3.6f;
-        }
+        double nCurrentSpeed = speed;
         Formatter fmt = new Formatter(new StringBuilder());
-        fmt.format(Locale.US, "%.2f", nCurrentSpeed);
+        fmt.format(Locale.US, "%.3f", nCurrentSpeed);
         String strCurrentSpeed = fmt.toString();
         strCurrentSpeed = strCurrentSpeed.replace(' ', '0');
 
         String strUnits = "meters/second";
-
         tv_speed.setText(strCurrentSpeed + " " + strUnits);
     }
 

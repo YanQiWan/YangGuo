@@ -75,7 +75,7 @@ public class RecordFragment extends Fragment {
 
         //画起点
         OverlayOptions startPoint = new MarkerOptions().position(target)
-                .icon(BitmapDescriptorFactory.fromResource(R.drawable.navi_map_gps))
+                .icon(BitmapDescriptorFactory.fromResource(R.drawable.start_point))
                 .zIndex(5);
 
         mBaiduMap.addOverlay(startPoint);
@@ -112,7 +112,6 @@ public class RecordFragment extends Fragment {
                 double mLatitude = Double.parseDouble(lineTxt);
                 lineTxt = br.readLine();
                 double mLongtitude = Double.parseDouble(lineTxt);
-                Log.e(TAG, mLatitude+" "+mLongtitude);
                 LatLng latLng = new LatLng(mLatitude, mLongtitude);
                 latLngs.add(latLng);
             }
@@ -134,7 +133,7 @@ public class RecordFragment extends Fragment {
         tv_endPlace.setText(recordItem.getEndPlace());
         try {
             tv_startTime.setText(DateUtils.sdf.format(DateUtils.sdf_GMT.parse(recordItem.getStartTime())));
-            tv_endTime.setText(DateUtils.sdf.format(DateUtils.sdf_GMT.parse(recordItem.getStartTime())));
+            tv_endTime.setText(DateUtils.sdf.format(DateUtils.sdf_GMT.parse(recordItem.getEndTime())));
         } catch (ParseException e) {
             e.printStackTrace();
         }

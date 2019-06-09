@@ -24,6 +24,7 @@ import android.graphics.Paint.Cap;
 import android.graphics.Paint.Join;
 import android.graphics.Paint.Style;
 import android.graphics.RectF;
+import android.media.MediaPlayer;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.Pair;
@@ -31,14 +32,19 @@ import android.util.TypedValue;
 import android.widget.Toast;
 
 import com.example.application.SysApplication;
+import com.example.superdriver.R;
 
 import org.tensorflow.demo.Classifier.Recognition;
 import org.tensorflow.demo.env.BorderedText;
 import org.tensorflow.demo.env.ImageUtils;
 import org.tensorflow.demo.env.Logger;
 
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.PriorityQueue;
 import java.util.Queue;
 
 /**
@@ -75,6 +81,35 @@ public class MultiBoxTracker {
     public ObjectTracker objectTracker;
 
     final List<Pair<Float, RectF>> screenRects = new LinkedList<Pair<Float, RectF>>();
+
+    //报警模块
+    private MediaPlayer mediaPlayer = null;
+    private float x_p = 1.35f;
+    private float y_p = 0.6f;
+    private float left_x_a = x_p * SysApplication.Screen_px_width;
+    private float left_y_b = y_p * SysApplication.Screen_px_height;
+    private float left_end_x = (1 - 0.5f / y_p) * left_x_a;
+    private float left_end_y = 0.5f * SysApplication.Screen_px_height;
+    private float left_start_x = 0;
+    private float left_start_y = SysApplication.Screen_px_height * y_p;
+    private float right_y_b = -SysApplication.Screen_px_height * y_p * (1 - x_p) / x_p;
+    private float right_x_a = -SysApplication.Screen_px_width * (x_p - 1);
+    private float right_start_x = SysApplication.Screen_px_width;
+    private float right_start_y = SysApplication.Screen_px_height * y_p;
+    private float right_end_y = 0.5f * SysApplication.Screen_px_height;
+    private float right_end_x = (1 - 0.5f * SysApplication.Screen_px_height / right_y_b) * right_x_a;
+    private float intersection_y = right_y_b * left_y_b * (right_x_a - left_x_a) / (right_x_a * left_y_b - right_y_b * left_x_a);
+    private float intersection_x = right_x_a * left_x_a * (left_y_b - right_y_b) / (right_x_a * left_y_b - right_y_b * left_x_a);
+    //  private float intersection_y = 0.3f * SysApplication.Screen_px_height;
+    // private float intersection_x = 0.5f * SysApplication.Screen_px_width;
+
+    private float left_end_x2 = SysApplication.Screen_px_width;
+    private float left_end_y2 = (1 - SysApplication.Screen_px_width / left_x_a) * left_y_b;
+    private float right_end_x2 = 0;
+    private float right_end_y2 = right_y_b;
+    private PriorityQueue<AlarmEvent> priorityQueue = null;
+
+    private Map<Integer, Integer> event2rawId = new HashMap<>();
 
     private static class TrackedRecognition {
         ObjectTracker.TrackedObject trackedObject;
@@ -116,6 +151,65 @@ public class MultiBoxTracker {
                 TypedValue.applyDimension(
                         TypedValue.COMPLEX_UNIT_DIP, TEXT_SIZE_DIP, context.getResources().getDisplayMetrics());
         borderedText = new BorderedText(textSizePx);
+
+        initData();
+        Log.e("yang", left_x_a + " " + left_y_b + " " + right_x_a + " " + right_y_b + " " + SysApplication.Screen_px_width + " " + SysApplication.Screen_px_height);
+    }
+
+    private enum Event {
+        front_person(0), front_bicycle(1), front_car(2), front_traffic_light(3), front_stop_sign(4),
+        left_person(5), right_person(6), left_bicycle(7), right_bicycle(8), left_car(9), right_car(10);
+        private final int value;
+
+        private Event(int value) {
+            this.value = value;
+        }
+
+        public int value() {
+            return this.value;
+        }
+    }
+
+    class AlarmEvent {
+        public Event event;
+        public double distance;
+
+        AlarmEvent(Event event, double distance) {
+            this.event = event;
+            this.distance = distance;
+        }
+    }
+
+    class MyComparator implements Comparator<AlarmEvent> {
+
+        @Override
+        public int compare(AlarmEvent t1, AlarmEvent t2) {
+            if (t1.event.value() == t2.event.value() && t1.distance == t2.distance)
+                return 0;
+            if ((t1.event.value() <= 4 && t2.event.value() <= 4) || (t1.event.value() > 4 && t2.event.value() > 4)) {
+                return t1.distance < t2.distance ? -1 : 1;
+            } else {
+                return t1.event.value() < t2.event.value() ? -1 : 1;
+            }
+        }
+    }
+
+    private void initData() {
+        mediaPlayer = new MediaPlayer();
+        event2rawId.put(0, R.raw.front_person);
+        event2rawId.put(1, R.raw.front_bicycle);
+        event2rawId.put(2, R.raw.front_car);
+        event2rawId.put(3, R.raw.front_traffic_light);
+        event2rawId.put(4, R.raw.front_stop_sign);
+        event2rawId.put(5, R.raw.left_person);
+        event2rawId.put(6, R.raw.right_person);
+        event2rawId.put(7, R.raw.left_bicycle);
+        event2rawId.put(8, R.raw.right_bicycle);
+        event2rawId.put(9, R.raw.left_car);
+        event2rawId.put(10, R.raw.right_car);
+
+        mediaPlayer = new MediaPlayer();
+        priorityQueue = new PriorityQueue<>(10, new MyComparator());
     }
 
     private Matrix getFrameToCanvasMatrix() {
@@ -166,6 +260,15 @@ public class MultiBoxTracker {
     }
 
     public synchronized void draw(final Canvas canvas) {
+        //主车道标识线
+        boxPaint.setColor(Color.RED);
+        canvas.drawLine(left_start_x, left_start_y, left_end_x, left_end_y, boxPaint);
+        canvas.drawLine(right_start_x, right_start_y, right_end_x, right_end_y, boxPaint);
+//        boxPaint.setColor(Color.BLUE);
+//        canvas.drawLine(right_end_x, right_end_y, right_end_x2, right_end_y2, boxPaint);
+//        canvas.drawLine(left_end_x, left_end_y, left_end_x2, left_end_y2, boxPaint);
+        boxPaint.setColor(Color.BLACK);
+        canvas.drawPoint(intersection_x, intersection_y, boxPaint);
         final boolean rotated = sensorOrientation % 180 == 90;
         final float multiplier =
                 Math.min(canvas.getHeight() / (float) (rotated ? frameWidth : frameHeight),
@@ -195,13 +298,55 @@ public class MultiBoxTracker {
                             ? String.format("%s %.2f", recognition.title, recognition.detectionConfidence)
                             : String.format("%.2f", recognition.detectionConfidence);
 
-            borderedText.drawText(canvas, trackedPos.left + cornerSize, trackedPos.bottom, labelString+"\n");
-//            borderedText.drawText(canvas, trackedPos.left + cornerSize, trackedPos.bottom+cornerSize*1+10, trackedPos.left+"");
-//            borderedText.drawText(canvas, trackedPos.left + cornerSize, trackedPos.bottom+cornerSize*2+10, trackedPos.top+"");
-//            borderedText.drawText(canvas, trackedPos.left + cornerSize, trackedPos.bottom+cornerSize*3+10, trackedPos.right+"");
-//            borderedText.drawText(canvas, trackedPos.left + cornerSize, trackedPos.bottom+cornerSize*4+10, trackedPos.bottom+"");
-//            borderedText.drawText(canvas, trackedPos.left + cornerSize, trackedPos.bottom+cornerSize*5+10, (trackedPos.right-trackedPos.left)+"");
-//            borderedText.drawText(canvas, trackedPos.left + cornerSize, trackedPos.bottom+cornerSize*6+10, (trackedPos.bottom-trackedPos.top)+"");
+            borderedText.drawText(canvas, trackedPos.left + cornerSize, trackedPos.bottom, labelString + "\n");
+
+            String title = recognition.title;
+            if (title.equals("person")) {
+                float center_x = (trackedPos.left + trackedPos.right) / 2;
+                float center_y = (trackedPos.top + trackedPos.bottom) / 2;
+                if (center_y > intersection_y && center_x / left_x_a + center_y / left_y_b - 1 < 0) {
+                    priorityQueue.add(new AlarmEvent(Event.left_person, 5 * (trackedPos.right - trackedPos.left)));
+                } else if (center_y > intersection_y && center_x / right_x_a + center_y / right_y_b - 1 < 0) {
+                    priorityQueue.add(new AlarmEvent(Event.right_person, 5 * (trackedPos.right - trackedPos.left)));
+                } else
+                    priorityQueue.add(new AlarmEvent(Event.front_person, 5 * (trackedPos.right - trackedPos.left)));
+            } else if (title.equals("car") || title.equals("bus") || title.equals("truck")) {
+                float center_x = (trackedPos.left + trackedPos.right) / 2;
+                float center_y = (trackedPos.top + trackedPos.bottom) / 2;
+                if (center_y > intersection_y && center_x / left_x_a + center_y / left_y_b - 1 < 0) {
+                    priorityQueue.add(new AlarmEvent(Event.left_car, 1.5 * (trackedPos.right - trackedPos.left)));
+                } else if (center_y > intersection_y && center_x / right_x_a + center_y / right_y_b - 1 < 0) {
+                    priorityQueue.add(new AlarmEvent(Event.right_car, 1.5 * (trackedPos.right - trackedPos.left)));
+                } else
+                    priorityQueue.add(new AlarmEvent(Event.front_car, 1.5 * (trackedPos.right - trackedPos.left)));
+            } else if (title.equals("bicycle") || title.equals("motorcycle")) {
+                float center_x = (trackedPos.left + trackedPos.right) / 2;
+                float center_y = (trackedPos.top + trackedPos.bottom) / 2;
+                if (center_y > intersection_y && center_x / left_x_a + center_y / left_y_b - 1 < 0) {
+                    priorityQueue.add(new AlarmEvent(Event.left_bicycle, trackedPos.right - trackedPos.left));
+                } else if (center_y > intersection_y && center_x / right_x_a + center_y / right_y_b - 1 < 0) {
+                    priorityQueue.add(new AlarmEvent(Event.right_bicycle, trackedPos.right - trackedPos.left));
+                } else
+                    priorityQueue.add(new AlarmEvent(Event.front_bicycle, trackedPos.right - trackedPos.left));
+            } else if (title.equals("traffic light")) {
+                priorityQueue.add(new AlarmEvent(Event.front_traffic_light, 10 * (trackedPos.right - trackedPos.left)));
+            } else if (title.equals("stop sign")) {
+                priorityQueue.add(new AlarmEvent(Event.front_stop_sign, 4 * (trackedPos.right - trackedPos.left)));
+            }
+//            borderedText.drawText(canvas, trackedPos.left + cornerSize, trackedPos.bottom + cornerSize * 1 + 10, trackedPos.left + "");
+//            borderedText.drawText(canvas, trackedPos.left + cornerSize, trackedPos.bottom + cornerSize * 2 + 10, trackedPos.top + "");
+//            borderedText.drawText(canvas, trackedPos.left + cornerSize, trackedPos.bottom + cornerSize * 3 + 10, trackedPos.right + "");
+//            borderedText.drawText(canvas, trackedPos.left + cornerSize, trackedPos.bottom + cornerSize * 4 + 10, trackedPos.bottom + "");
+//            borderedText.drawText(canvas, trackedPos.left + cornerSize, trackedPos.bottom + cornerSize * 5 + 10, (trackedPos.right - trackedPos.left) + "");
+//            borderedText.drawText(canvas, trackedPos.left + cornerSize, trackedPos.bottom + cornerSize * 6 + 10, (trackedPos.bottom - trackedPos.top) + "");
+        }
+        if (!priorityQueue.isEmpty()) {
+            if (!mediaPlayer.isPlaying()) {
+                Event event = priorityQueue.peek().event;
+                mediaPlayer = MediaPlayer.create(context, event2rawId.get(event.value()));
+                mediaPlayer.start();
+            }
+            priorityQueue = new PriorityQueue<>(10, new MyComparator());
         }
     }
 
@@ -272,7 +417,7 @@ public class MultiBoxTracker {
             rgbFrameToScreen.mapRect(detectionScreenRect, detectionFrameRect);
 
             Log.e("Like",
-                    "Result! Frame: " + result.getLocation() + " mapped to screen:" + " Like "+detectionScreenRect.left+" "+detectionScreenRect.right+" "+detectionScreenRect.bottom+" "+detectionScreenRect.top);
+                    "Result! Frame: " + result.getLocation() + " mapped to screen:" + " Like " + detectionScreenRect.left + " " + detectionScreenRect.right + " " + detectionScreenRect.bottom + " " + detectionScreenRect.top);
 
             screenRects.add(new Pair<Float, RectF>(result.getConfidence(), detectionScreenRect));
 

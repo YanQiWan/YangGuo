@@ -99,6 +99,9 @@ public class LoginFragment extends Fragment {
                         public void onError(Call arg0, Exception arg1, int arg2) {
                             // TODO Auto-generated method stub
                             Log.e(TAG, "Error");
+                            progressDialog.dismiss();
+                            new AlertDialog.Builder(getActivity()).setTitle("注意").setMessage("网络连接异常，请检查您的网络设置!")
+                                    .setPositiveButton("确定", null).show();
                         }
 
                         @Override
